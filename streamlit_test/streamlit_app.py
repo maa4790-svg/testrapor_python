@@ -82,9 +82,7 @@ def main():
         """)
         
         st.header("🔐 Login Bilgileri")
-        st.caption("Güvenliğiniz için tercihen Secrets kullanın. Gerekirse buradan da girebilirsiniz.")
-        email_input = st.text_input("Email", value="", placeholder="email@domain.com")
-        password_input = st.text_input("Şifre", value="", type="password", placeholder="••••••••")
+        st.success("Login bilgileri otomatik olarak kullanılıyor")
     
     # Ana form
     col1, col2 = st.columns([2, 1])
@@ -149,33 +147,10 @@ def process_orders(order_ids_input, show_progress, auto_download):
     
     # Scraper oluştur
     try:
-        email = None
-        password = None
-
-        # 1) Öncelik: Kullanıcının UI'dan girdiği değerler
-        if 'email_input' in locals() and email_input:
-            email = email_input.strip()
-        if 'password_input' in locals() and password_input:
-            password = password_input
-
-        # 2) UI boşsa: Streamlit secrets
-        if not email or not password:
-            try:
-                email = email or st.secrets.get("PAYZGATE_EMAIL", None)
-                password = password or st.secrets.get("PAYZGATE_PASSWORD", None)
-            except Exception:
-                pass
-
-        # 3) Secrets da yoksa: ENV değişkenleri
-        if not email:
-            email = os.environ.get("PAYZGATE_EMAIL")
-        if not password:
-            password = os.environ.get("PAYZGATE_PASSWORD")
-
-        if not email or not password:
-            st.error("🔐 Giriş bilgileri eksik. Sidebar'dan Email/Şifre girin veya Secrets/ENV tanımlayın.")
-            return
-
+        # Sabit login bilgileri (eski hali)
+        email = "aras@pay.com"
+        password = "0JHe0ET1FfoD"
+        
         scraper = PayzgateScraper(email=email, password=password)
         
         # Veri çekme işlemi
