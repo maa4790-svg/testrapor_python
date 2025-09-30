@@ -546,7 +546,9 @@ class PayzgateScraper:
             return order_data
             
         except Exception as e:
-            print(f"Hata oluştu: {str(e)}")
+            print(f"💥 Veri çekme hatası: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def extract_order_data(self, soup, order_id):

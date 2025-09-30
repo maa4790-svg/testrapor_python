@@ -180,6 +180,11 @@ def process_orders(order_ids_input, show_progress, auto_download):
             # Debug bilgisi
             st.write(f"🔍 Debug: {order_id} için veri çekiliyor...")
             
+            # Login test
+            st.write("🔐 Login testi yapılıyor...")
+            login_success = scraper.login()
+            st.write(f"Login sonucu: {'✅ Başarılı' if login_success else '❌ Başarısız'}")
+            
             # Veri çek
             order_data = scraper.get_order_data(order_id)
             
@@ -189,6 +194,7 @@ def process_orders(order_ids_input, show_progress, auto_download):
                 all_orders_data.append(order_data)
             else:
                 st.write(f"❌ {order_id}: Veri çekilemedi")
+                st.write("🔍 Detaylı hata bilgisi için console loglarını kontrol edin")
             
             # Kısa bekleme
             time.sleep(0.5)
