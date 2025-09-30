@@ -108,6 +108,7 @@ def main():
         # İşlem ayarları
         show_progress = st.checkbox("Progress göster", value=True)
         auto_download = st.checkbox("Otomatik indirme", value=True)
+        force_selenium = st.checkbox("Selenium kullan (lokal için)", value=True)
         
         # Veri çekme butonu
         if st.button("🚀 Veri Çek", type="primary", use_container_width=True):
@@ -171,7 +172,10 @@ def process_orders(order_ids_input, show_progress, auto_download):
             st.write(f"Login sonucu: {'✅ Başarılı' if login_success else '❌ Başarısız'}")
             
             # Veri çek
-            order_data = scraper.get_order_data(order_id)
+            if 'force_selenium' in locals() and force_selenium:
+                order_data = scraper.selenium_get_order_data(order_id)
+            else:
+                order_data = scraper.get_order_data(order_id)
             
             # Debug sonucu
             if order_data:
