@@ -55,7 +55,6 @@ class PayzgateScraper:
             login_url = f"{self.base_url}/login"
             print(f"📄 Login sayfası alınıyor: {login_url}")
             
-            # İlk GET: token ve çerezleri al
             response = self.session.get(login_url)
             print(f"📊 Sayfa yanıt kodu: {response.status_code}")
             
@@ -66,12 +65,9 @@ class PayzgateScraper:
             
             # CSRF token'ı çıkar
             soup = BeautifulSoup(response.text, 'html.parser')
-            csrf_input = soup.find('input', {'name': '__RequestVerificationToken'})
-            csrf_token_value = csrf_input.get('value') if csrf_input else None
-            # Bazı ASP.NET uygulamalarında token cookie olarak da gelir
-            cookie_token_value = self.session.cookies.get('__RequestVerificationToken')
+            csrf_token = soup.find('input', {'name': '__RequestVerificationToken'})
             
-            if not csrf_token_value and not cookie_token_value:
+            if not csrf_token:
                 print("❌ CSRF token bulunamadı!")
                 print("Sayfa içeriği kontrol ediliyor...")
                 
@@ -89,33 +85,14 @@ class PayzgateScraper:
             login_data = {
                 'Email': self.email,
                 'Password': self.password,
-                'RememberMe': 'false'
+                'RememberMe': 'false',
+                '__RequestVerificationToken': csrf_token.get('value')
             }
-            # Token form alanı bekleniyorsa ekle
-            if csrf_token_value:
-                login_data['__RequestVerificationToken'] = csrf_token_value
             
             print(f"📤 Login isteği gönderiliyor... Email: {self.email}")
             
-            # Login isteği için ek header'lar (anti-forgery ve kaynak doğrulama)
-            post_headers = {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Origin': self.base_url,
-                'Referer': login_url,
-            }
-            # Bazı uygulamalar anti-forgery header ister
-            if csrf_token_value:
-                post_headers['RequestVerificationToken'] = csrf_token_value
-            elif cookie_token_value:
-                post_headers['X-Request-Verification-Token'] = cookie_token_value
-
             # Login isteği gönder
-            login_response = self.session.post(
-                login_url,
-                data=login_data,
-                headers=post_headers,
-                allow_redirects=True,
-            )
+            login_response = self.session.post(login_url, data=login_data, allow_redirects=True)
             
             print(f"📊 Login yanıt kodu: {login_response.status_code}")
             print(f"🔗 Yönlendirilen URL: {login_response.url}")
@@ -128,7 +105,6 @@ class PayzgateScraper:
                     return True
                 else:
                     print("❌ Login başarısız! Hala login sayfasındayız")
-                    print(f"🔗 Final URL: {login_response.url}")
                     
                     # Hata mesajlarını kontrol et
                     soup = BeautifulSoup(login_response.text, 'html.parser')
@@ -138,19 +114,7 @@ class PayzgateScraper:
                         for error in error_messages:
                             print(f"   - {error.get_text(strip=True)}")
                     
-                    # Sayfa içeriğini kontrol et
-                    page_text = soup.get_text()[:500]
-                    print(f"📄 Sayfa içeriği (ilk 500 karakter): {page_text}")
-                    
                     return False
-            elif login_response.status_code in (301, 302, 303, 307, 308):
-                # Başarılı login sonrası yönlendirme kabul
-                final_url = login_response.url
-                print(f"↪️ Yönlendirme tespit edildi: {final_url}")
-                if 'login' not in final_url.lower():
-                    print("✅ Login başarılı (redirect)")
-                    return True
-                return False
             else:
                 print(f"❌ Login isteği başarısız: {login_response.status_code}")
                 return False
