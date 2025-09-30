@@ -177,10 +177,18 @@ def process_orders(order_ids_input, show_progress, auto_download):
                 progress_bar.progress(progress)
                 status_text.text(f"İşleniyor: {order_id} ({i+1}/{len(order_ids)})")
             
+            # Debug bilgisi
+            st.write(f"🔍 Debug: {order_id} için veri çekiliyor...")
+            
             # Veri çek
             order_data = scraper.get_order_data(order_id)
+            
+            # Debug sonucu
             if order_data:
+                st.write(f"✅ {order_id}: Veri başarıyla çekildi")
                 all_orders_data.append(order_data)
+            else:
+                st.write(f"❌ {order_id}: Veri çekilemedi")
             
             # Kısa bekleme
             time.sleep(0.5)

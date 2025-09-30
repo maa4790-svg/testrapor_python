@@ -105,6 +105,7 @@ class PayzgateScraper:
                     return True
                 else:
                     print("❌ Login başarısız! Hala login sayfasındayız")
+                    print(f"🔗 Final URL: {login_response.url}")
                     
                     # Hata mesajlarını kontrol et
                     soup = BeautifulSoup(login_response.text, 'html.parser')
@@ -113,6 +114,10 @@ class PayzgateScraper:
                         print("🚨 Hata mesajları:")
                         for error in error_messages:
                             print(f"   - {error.get_text(strip=True)}")
+                    
+                    # Sayfa içeriğini kontrol et
+                    page_text = soup.get_text()[:500]
+                    print(f"📄 Sayfa içeriği (ilk 500 karakter): {page_text}")
                     
                     return False
             else:
@@ -515,6 +520,9 @@ class PayzgateScraper:
             # Requests ile veri çekme (Selenium olmadan)
             response = self.session.get(url)
             
+            print(f"📊 Sipariş sayfası yanıt kodu: {response.status_code}")
+            print(f"🔗 Sipariş sayfası URL: {response.url}")
+            
             if response.status_code != 200:
                 print(f"❌ Sayfa alınamadı: {response.status_code}")
                 return None
@@ -525,6 +533,11 @@ class PayzgateScraper:
             # Login kontrolü - login sayfasına yönlendirilmiş mi?
             if 'login' in response.url.lower() or 'login' in soup.get_text().lower():
                 print("❌ Login sayfasına yönlendirildi, veri çekilemedi!")
+                print(f"🔗 Final URL: {response.url}")
+                
+                # Sayfa içeriğini kontrol et
+                page_text = soup.get_text()[:500]
+                print(f"📄 Sayfa içeriği (ilk 500 karakter): {page_text}")
                 return None
             
             # Veri çekme işlemleri
