@@ -492,7 +492,7 @@ class PayzgateScraper:
     
     def get_order_data(self, order_id):
         """
-        Belirtilen sipariş ID'si için veri çeker (Streamlit Cloud uyumlu)
+        Belirtilen sipariş ID'si için veri çeker (Selenium ile)
         
         Args:
             order_id (str): Sipariş ID'si
@@ -505,40 +505,14 @@ class PayzgateScraper:
         try:
             print(f"Sipariş verisi çekiliyor: {url}")
             
-            # Önce login kontrolü yap
+            # Selenium ile login ve veri çekme (requests başarısız olduğu için)
             if self.email and self.password:
-                print("Login kontrolü yapılıyor...")
-                if not self.login():
-                    print("Requests ile login başarısız!")
-                    return None
-            
-            # Requests ile veri çekme (Selenium olmadan)
-            response = self.session.get(url)
-            
-            print(f"📊 Sipariş sayfası yanıt kodu: {response.status_code}")
-            print(f"🔗 Sipariş sayfası URL: {response.url}")
-            
-            if response.status_code != 200:
-                print(f"❌ Sayfa alınamadı: {response.status_code}")
+                print("Selenium ile login ve veri çekme başlatılıyor...")
+                order_data = self.selenium_get_order_data(order_id)
+                return order_data
+            else:
+                print("❌ Email ve şifre gerekli!")
                 return None
-            
-            # BeautifulSoup ile parse et
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Login kontrolü - login sayfasına yönlendirilmiş mi?
-            if 'login' in response.url.lower() or 'login' in soup.get_text().lower():
-                print("❌ Login sayfasına yönlendirildi, veri çekilemedi!")
-                print(f"🔗 Final URL: {response.url}")
-                
-                # Sayfa içeriğini kontrol et
-                page_text = soup.get_text()[:500]
-                print(f"📄 Sayfa içeriği (ilk 500 karakter): {page_text}")
-                return None
-            
-            # Veri çekme işlemleri
-            order_data = self.extract_order_data(soup, order_id)
-            
-            return order_data
             
         except Exception as e:
             print(f"💥 Veri çekme hatası: {str(e)}")
