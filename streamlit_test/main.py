@@ -492,7 +492,7 @@ class PayzgateScraper:
     
     def get_order_data(self, order_id):
         """
-        Belirtilen sipariş ID'si için veri çeker
+        Belirtilen sipariş ID'si için veri çeker (Streamlit Cloud uyumlu)
         
         Args:
             order_id (str): Sipariş ID'si
@@ -509,48 +509,28 @@ class PayzgateScraper:
             if self.email and self.password:
                 print("Login kontrolü yapılıyor...")
                 if not self.login():
-                    print("Requests ile login başarısız, Selenium ile denenecek...")
-                    if not self.selenium_login():
-                        print("Selenium ile de login başarısız, veri çekilemedi!")
-                        return None
+                    print("Requests ile login başarısız!")
+                    return None
             
-            # Login başarılı ise cookie'leri kullan, değilse Selenium ile login yap
-            if self.email and self.password:
-                # Selenium ile login ve veri çekme
-                order_data = self.selenium_get_order_data(order_id)
-                return order_data
-            else:
-                # Login olmadan veri çekme
-                chrome_options = Options()
-                chrome_options.add_argument("--headless")  # Arka planda çalıştır
-                chrome_options.add_argument("--no-sandbox")
-                chrome_options.add_argument("--disable-dev-shm-usage")
-                chrome_options.add_argument("--disable-gpu")
-                chrome_options.add_argument("--window-size=1920,1080")
-                
-                driver = webdriver.Chrome(
-                    service=Service(ChromeDriverManager().install()),
-                    options=chrome_options
-                )
-                
-                driver.get(url)
-                
-                # Sayfanın yüklenmesini bekle
-                WebDriverWait(driver, 10).until(
-                    EC.presence_of_element_located((By.TAG_NAME, "body"))
-                )
-                
-                # Sayfa kaynağını al
-                page_source = driver.page_source
-                driver.quit()
-                
-                # BeautifulSoup ile parse et
-                soup = BeautifulSoup(page_source, 'html.parser')
-                
-                # Veri çekme işlemleri
-                order_data = self.extract_order_data(soup, order_id)
-                
-                return order_data
+            # Requests ile veri çekme (Selenium olmadan)
+            response = self.session.get(url)
+            
+            if response.status_code != 200:
+                print(f"❌ Sayfa alınamadı: {response.status_code}")
+                return None
+            
+            # BeautifulSoup ile parse et
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Login kontrolü - login sayfasına yönlendirilmiş mi?
+            if 'login' in response.url.lower() or 'login' in soup.get_text().lower():
+                print("❌ Login sayfasına yönlendirildi, veri çekilemedi!")
+                return None
+            
+            # Veri çekme işlemleri
+            order_data = self.extract_order_data(soup, order_id)
+            
+            return order_data
             
         except Exception as e:
             print(f"Hata oluştu: {str(e)}")
