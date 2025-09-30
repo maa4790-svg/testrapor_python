@@ -147,7 +147,26 @@ def process_orders(order_ids_input, show_progress, auto_download):
     
     # Scraper oluştur
     try:
-        scraper = PayzgateScraper(email="aras@pay.com", password="0JHe0ET1FfoD")
+        email = None
+        password = None
+
+        # Önce Streamlit secrets, sonra ENV değişkenleri
+        try:
+            email = st.secrets.get("PAYZGATE_EMAIL", None)
+            password = st.secrets.get("PAYZGATE_PASSWORD", None)
+        except Exception:
+            pass
+
+        if not email:
+            email = os.environ.get("PAYZGATE_EMAIL")
+        if not password:
+            password = os.environ.get("PAYZGATE_PASSWORD")
+
+        if not email or not password:
+            st.error("🔐 Giriş bilgileri eksik. Lütfen `PAYZGATE_EMAIL` ve `PAYZGATE_PASSWORD` değerlerini Secrets veya ortam değişkeni olarak tanımlayın.")
+            return
+
+        scraper = PayzgateScraper(email=email, password=password)
         
         # Veri çekme işlemi
         all_orders_data = []
